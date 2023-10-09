@@ -58,3 +58,13 @@ exports.signUpUser = async (req, res) => {
     res.status(200).send({ error: true, message: error?.message });
   }
 };
+
+exports.fetchUsers = async (req, res) => {
+  try {
+    const { id } = req;
+    const users = await LoginModel.find({ _id: { $ne: id } });
+    res.status(200).send({ error: false, data: users });
+  } catch (error) {
+    res.status(200).send({ error: true, message: error?.message });
+  }
+};
