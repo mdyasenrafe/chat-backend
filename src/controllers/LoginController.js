@@ -1,19 +1,21 @@
+const generateToken = require("../middlewares/GenerateToken");
 const LoginModel = require("../models/LoginModel");
 const bcrypt = require("bcrypt");
 
 exports.handleLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email + " " + password);
     if (email && password) {
       const user = await LoginModel.findOne({ email: email });
       if (user) {
         const isValidPassword = await bcrypt.compare(password, user?.password);
+        const token = generateToken(user?.email, user?._id);
         if (isValidPassword) {
           res.status(200).send({
             error: false,
             data: user,
             message: "Login successful",
+            token: token,
           });
         } else {
           res.status(200).send({
