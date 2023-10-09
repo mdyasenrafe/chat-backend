@@ -1,19 +1,19 @@
 const LoginModel = require("../models/LoginModel");
 const bcrypt = require("bcrypt");
 
-exports.loginUser = async (req, res) => {
+exports.handleLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log(email + " " + password);
     if (email && password) {
       const user = await LoginModel.findOne({ email: email });
       if (user) {
-        const ValidPassword = await bcrypt.compare(password, user?.password);
-        if (ValidPassword) {
+        const isValidPassword = await bcrypt.compare(password, user?.password);
+        if (isValidPassword) {
           res.status(200).send({
             error: false,
             data: user,
-            message: "Login successfully",
+            message: "Login successful",
           });
         } else {
           res.status(200).send({
@@ -27,10 +27,11 @@ exports.loginUser = async (req, res) => {
         .status(200)
         .send({ error: true, message: "Please enter email and password" });
     }
-  } catch (err) {
-    res.status(200).send({ error: true, message: err?.message });
+  } catch (error) {
+    res.status(200).send({ error: true, message: error?.message });
   }
 };
+
 exports.signUpUser = async (req, res) => {
   try {
     let hashedPassword;
@@ -40,18 +41,18 @@ exports.signUpUser = async (req, res) => {
     } else {
       res.status(200).send({
         error: true,
-        message: "Please enter password and email",
+        message: "Please enter a password and email",
       });
     }
     req.body.password = hashedPassword;
     console.log(req.body);
-    const newData = new LoginModel(req.body);
-    await newData.save();
+    const newUser = new LoginModel(req.body);
+    await newUser.save();
     res.status(200).send({
       error: false,
       message: "User created successfully",
     });
-  } catch (err) {
-    res.status(200).send({ error: true, message: err?.message });
+  } catch (error) {
+    res.status(200).send({ error: true, message: error?.message });
   }
 };

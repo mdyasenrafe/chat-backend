@@ -44,7 +44,7 @@ mongoose
   })
   .catch((err) => console.log(err.message));
 
-app.use("/api/login", LoginRoute);
+app.use("/api/auth", LoginRoute);
 
 // cors erorr
 app.use(function (req, res, next) {
