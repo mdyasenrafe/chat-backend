@@ -68,3 +68,13 @@ exports.fetchUsers = async (req, res) => {
     res.status(200).send({ error: true, message: error?.message });
   }
 };
+
+exports.FetchMe = async (req, res) => {
+  try {
+    const { id } = req;
+    const user = await LoginModel.findOne({ _id: id });
+    res.status(200).send({ error: false, data: user });
+  } catch (error) {
+    res.status(200).send({ error: true, message: error?.message });
+  }
+};
