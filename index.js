@@ -71,8 +71,8 @@ socketIO.on("connection", (socket) => {
     if (existingUser) {
       return;
     }
-    onlineUsers.push(newUser);
 
+    onlineUsers.push(newUser);
     socketIO.emit("getUsers", onlineUsers);
   });
 
@@ -82,9 +82,7 @@ socketIO.on("connection", (socket) => {
       const recipientUser = onlineUsers.find(
         (user) => user?.email === receiverEmail
       );
-      socketIO.to(recipientUser?.socketId).emit("getMessage", {
-        text,
-      });
+
       const bodyData = {
         receiverId: recipientUser?._id,
         text: text,
@@ -92,6 +90,14 @@ socketIO.on("connection", (socket) => {
       };
       const newMessage = new MessageModel(bodyData);
       await newMessage.save();
+      console.log(recipientUser, "recipientUser?.socketId");
+      console.log(socket.id, "socket.id");
+
+      socketIO.to(recipientUser?.socketId).emit("getMessage", {
+        text,
+        senderId,
+        receiverId: recipientUser?._id,
+      });
     } catch (err) {
       console.log(err);
     }
