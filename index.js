@@ -5,6 +5,10 @@ const bodyParser = require("body-parser");
 
 //file
 const LoginRoute = require("./src/routes/LoginRoute");
+const MessageRoute = require("./src/routes/MessageRoute");
+const LoginModel = require("./src/models/LoginModel");
+const { Console } = require("console");
+const MessageModel = require("./src/models/MessageModel");
 
 require("dotenv").config();
 
@@ -39,12 +43,69 @@ mongoose
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.5iwe9.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
+
   .then(() => {
     console.log("Mongodb connected....");
   })
   .catch((err) => console.log(err.message));
 
+const socketIO = require("socket.io")(http, {
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+let onlineUsers = [];
+
+socketIO.on("connection", (socket) => {
+  socket.emit("me", socket.id);
+
+  // Add a user to the online users list
+  socket.on("addUser", async (userId) => {
+    const userDetail = await LoginModel.findOne({ _id: userId });
+    const newUser = { ...userDetail._doc, socketId: socket.id };
+
+    const existingUser = onlineUsers.find(
+      (user) => user?.email === newUser.email
+    );
+    if (existingUser) {
+      return;
+    }
+    onlineUsers.push(newUser);
+
+    socketIO.emit("getUsers", onlineUsers);
+  });
+
+  // Send person-to-person message
+  socket.on("sendMessage", async ({ receiverEmail, text, senderId }) => {
+    try {
+      const recipientUser = onlineUsers.find(
+        (user) => user?.email === receiverEmail
+      );
+      socketIO.to(recipientUser?.socketId).emit("getMessage", {
+        text,
+      });
+      const bodyData = {
+        receiverId: recipientUser?._id,
+        text: text,
+        senderId: senderId,
+      };
+      const newMessage = new MessageModel(bodyData);
+      await newMessage.save();
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  // Disconnect
+  socket.on("disconnect", () => {
+    onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
+    socketIO.emit("getUsers", onlineUsers);
+  });
+});
+
 app.use("/api/auth", LoginRoute);
+app.use("/api/message", MessageRoute);
 
 // cors erorr
 app.use(function (req, res, next) {

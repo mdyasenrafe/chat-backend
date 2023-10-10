@@ -6,7 +6,6 @@ const {
   FetchMe,
 } = require("../controllers/LoginController");
 const checkLogin = require("../middlewares/CheckLogin");
-const { route } = require("express/lib/application");
 const router = express.Router();
 
 router.post("/signup", signUpUser);
